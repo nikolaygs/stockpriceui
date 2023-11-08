@@ -1,6 +1,5 @@
 ## Overview
-A simplistic web interface that call a web service in order to calculate the maximum profit that could have been realized by trading specif stock in a given time slice.
-
+A simplistic web interface that call a web service in order to calculate the maximum profit that could have been realized by trading specific stock in a given time slice.
 The repo is intented to be a user interface of [this git repo](https://github.com/nikolaygs/stockpricews)
 
 ## Available Scripts
