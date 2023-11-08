@@ -77,6 +77,12 @@ export default function MaxProfitForm() {
     if (data.status == 200) {
       setResultPanelProps("success", profitMessage(data.body));
     } else if (data.status == 404 || data.status == 400) {
+      if (!Object.hasOwn(data.body, "message")) {
+        setResultPanelProps(
+          "info",
+          "Failed to parse the error message returned by the server"
+        );
+      }
       setResultPanelProps("info", data.body.message);
     } else {
       setResultPanelProps("danger", "The server failed to return a response");
@@ -100,6 +106,9 @@ export default function MaxProfitForm() {
 
   // profitMessage generates user-"friendly" message about the max possible profit
   function profitMessage(data) {
+    if (!validateSuccessResponse(data)) {
+      return "Failed to parse the data returned by the server";
+    }
     const begin = beginPoint;
     const end = endPoint;
     const shares = amount / data.buyPoint.price;
@@ -115,6 +124,29 @@ export default function MaxProfitForm() {
     This could have been achieved if you have bought <b>${shares.toFixed(
       2
     )}</b> of shares on <b>${lowestDate}</b> and sold them on <b>${highestDate}</b>`);
+  }
+
+  // Probably a not very idiomatic - strict typing(TS) would be way more elegant
+  function validateSuccessResponse(resp) {
+    if (!Object.hasOwn(resp, "buyPoint") || !Object.hasOwn(resp, "sellPoint")) {
+      return false;
+    }
+
+    if (
+      !Object.hasOwn(resp.buyPoint, "price") ||
+      !Object.hasOwn(resp.buyPoint, "date")
+    ) {
+      return false;
+    }
+
+    if (
+      !Object.hasOwn(resp.sellPoint, "price") ||
+      !Object.hasOwn(resp.sellPoint, "date")
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
   return (
