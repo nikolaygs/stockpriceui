@@ -6,21 +6,26 @@ import parse from "html-react-parser";
 import configData from "./config.json";
 
 export default function MaxProfitForm() {
-  // form validation status
+  // React boostrap alert variants used
+  const variantSuccess = "success";
+  const variantInfo = "info";
+  const variantError = "danger";
+
+  // Form validation status
   const [validated, setValidated] = useState(false);
 
-  // field values
+  // Field values
   const [beginPoint, setBeginPoint] = useState("");
   const [endPoint, setEndPoint] = useState("");
   const [amount, setAmount] = useState(0.0);
   const [stock, setStock] = useState("");
 
-  // result panel status fields
+  // Result panel status fields
   const [showResultPanel, setShowResultPanel] = useState(false);
   const [variantResultPanel, setVariantResultPanel] = useState("");
   const [messageResultPanel, setMessageResultPanel] = useState("");
 
-  // updates state upon change in any of the form fields
+  // Updates state upon change in any of the form input fields
   function onFieldChange(event) {
     switch (event.target.id) {
       case "begin":
@@ -40,9 +45,9 @@ export default function MaxProfitForm() {
     }
   }
 
-  // Handling of the submit form. It does two things:
-  // 1. Performs client-side validation
-  // 2. Fires server request if validation passes
+  // Handling of the form submission - it does two things:
+  // 1. Performs a client-side validation
+  // 2. Fires server request (if the validation passes)
   function handleSubmit(event) {
     const form = event.currentTarget;
     if (form.checkValidity() === true) {
@@ -54,47 +59,50 @@ export default function MaxProfitForm() {
     setValidated(true);
   }
 
-  // Builds URL and calls the server using fetch API
+  // Builds URL with query params and calls the server using fetch API
   function getMaxProfit() {
     // convert to seconds
     let beginSeconds = Date.parse(beginPoint) / 1000;
     let endSeconds = Date.parse(endPoint) / 1000;
 
+    // params are passed as query params
     fetch(
-      `http://localhost:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`
+      `http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`
     )
       .then((r) => r.json().then((data) => ({ status: r.status, body: data })))
       .then((data) => processResult(data))
       .catch((error) => onError(error));
   }
 
-  // Updates the status of the result panel based on the response receiced from the server.
-  // Generally the panel supports 3 states
-  // 1. Max Profit points were returned by the server and the panel displays "friendly" message to the user
+  // Updates the status of the result panel based on the response received from the server.
+  // The panel supports 3 states
+  // 1. Max profit points were returned by the server and the panel displays "friendly" message to the user
   // 2. Server returned 4XX retuest - panel renders the cause so client can fix its request
-  // 3. Any other error - generic message that server failed is displayed
+  // 3. Any other error - generic message that server failed to process the request is displayed
   function processResult(data) {
     if (data.status == 200) {
-      setResultPanelProps("success", profitMessage(data.body));
-    } else if (data.status == 404 || data.status == 400) {
-      if (!Object.hasOwn(data, "message")) {
-        setResultPanelProps(
-          "info",
-          "Failed to parse the error message returned by the server"
-        );
+      if (!validateSuccessResponse(data.body)) {
+        setResultPanelProps(variantError, "Failed to parse the response returned by the server");
+      } else {
+        setResultPanelProps(variantSuccess, profitMessage(data.body));
       }
-      setResultPanelProps("info", data.body.message);
+    } else if (data.status == 404 || data.status == 400) {
+      if (!Object.hasOwn(data.body, "message")) {
+        setResultPanelProps(variantError, "Failed to parse the error message returned by the server");
+      } else {
+        setResultPanelProps(variantInfo, data.body.message);
+      }
     } else {
-      setResultPanelProps("danger", "The server failed to return a response");
+      setResultPanelProps(variantError, "The server failed to return a response");
     }
 
     setShowResultPanel(true);
     return data;
   }
 
-  // Displays error message if fetching fails unexpectedly
+  // Displays error message if the fetch processing fails unexpectedly
   function onError(error) {
-    setResultPanelProps("danger", "The server failed to return a response");
+    setResultPanelProps(variantError, "The server failed to return a response");
     setShowResultPanel(true);
   }
 
@@ -104,25 +112,23 @@ export default function MaxProfitForm() {
     setMessageResultPanel(message);
   }
 
-  // profitMessage generates user-"friendly" message about the max possible profit
+  // Gnerates an user-"friendly" message about the max possible profit
   function profitMessage(data) {
-    if (!validateSuccessResponse(data)) {
-      return "Failed to parse the data returned by the server";
-    }
-    const begin = beginPoint;
-    const end = endPoint;
     const shares = amount / data.buyPoint.price;
     const maxProfit = (data.sellPoint.price - data.buyPoint.price) * shares;
 
     return parse(`
-    <b>${maxProfit.toFixed(2)}$</b> is the maximum profit that you could have earned 
-    in the period from <b>${begin}</b> to <b>${end}</b> by trading stock <b>${stock}</b>.
-    <p>
-    This could have been achieved if you have bought <b>${shares.toFixed(2)}</b> of shares
-     on <b>${data.buyPoint.date}</b> and sold them on <b>${data.sellPoint.date}</b>`);
+      <b>${maxProfit.toFixed(2)}$</b> is the maximum profit that you could have earned
+      in the period from <b>${beginPoint}</b> to <b>${endPoint}</b> by trading stock <b>${stock}</b>.
+      <p>
+      This could have been achieved if you have bought <b>${shares.toFixed(2)}</b> of shares
+      on <b>${data.buyPoint.date}</b> and sold them on <b>${data.sellPoint.date}</b>
+      </p>
+     `);
   }
 
-  // Probably a not very idiomatic - strict typing(TS) would be way more elegant
+
+  // Probably not very idiomatic approach - static typing(TS) would be way more elegant solution
   function validateSuccessResponse(resp) {
     if (!Object.hasOwn(resp, "buyPoint") || !Object.hasOwn(resp, "sellPoint")) {
       return false;

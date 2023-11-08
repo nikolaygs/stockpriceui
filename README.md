@@ -1,3 +1,7 @@
+
+The repo is intented to be a user interface of [this git repo](https://github.com/nikolaygs/stockpricews)
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
