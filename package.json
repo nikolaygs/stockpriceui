@@ -8,7 +8,9 @@
     "react-scripts": "^5.0.0"
   },
   "main": "/index.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "web-vitals": "^3.5.0"
+  },
   "name": "d25ywv",
   "description": null,
   "version": "0.0.29",
