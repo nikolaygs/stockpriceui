@@ -77,7 +77,7 @@ export default function MaxProfitForm() {
     if (data.status == 200) {
       setResultPanelProps("success", profitMessage(data.body));
     } else if (data.status == 404 || data.status == 400) {
-      if (!Object.hasOwn(data.body, "message")) {
+      if (!Object.hasOwn(data, "message")) {
         setResultPanelProps(
           "info",
           "Failed to parse the error message returned by the server"
@@ -113,17 +113,13 @@ export default function MaxProfitForm() {
     const end = endPoint;
     const shares = amount / data.buyPoint.price;
     const maxProfit = (data.sellPoint.price - data.buyPoint.price) * shares;
-    const lowestDate = data.buyPoint.date;
-    const highestDate = data.sellPoint.date;
 
     return parse(`
-    <b>${maxProfit.toFixed(
-      2
-    )}$</b> is the maximum profit that you could have earned in the period from <b>${begin}</b> to <b>${end}</b> by trading stock <b>${stock}</b>.
+    <b>${maxProfit.toFixed(2)}$</b> is the maximum profit that you could have earned 
+    in the period from <b>${begin}</b> to <b>${end}</b> by trading stock <b>${stock}</b>.
     <p>
-    This could have been achieved if you have bought <b>${shares.toFixed(
-      2
-    )}</b> of shares on <b>${lowestDate}</b> and sold them on <b>${highestDate}</b>`);
+    This could have been achieved if you have bought <b>${shares.toFixed(2)}</b> of shares
+     on <b>${data.buyPoint.date}</b> and sold them on <b>${data.sellPoint.date}</b>`);
   }
 
   // Probably a not very idiomatic - strict typing(TS) would be way more elegant
@@ -132,17 +128,11 @@ export default function MaxProfitForm() {
       return false;
     }
 
-    if (
-      !Object.hasOwn(resp.buyPoint, "price") ||
-      !Object.hasOwn(resp.buyPoint, "date")
-    ) {
+    if (!Object.hasOwn(resp.buyPoint, "price") || !Object.hasOwn(resp.buyPoint, "date")) {
       return false;
     }
 
-    if (
-      !Object.hasOwn(resp.sellPoint, "price") ||
-      !Object.hasOwn(resp.sellPoint, "date")
-    ) {
+    if (!Object.hasOwn(resp.sellPoint, "price") || !Object.hasOwn(resp.sellPoint, "date")) {
       return false;
     }
 
