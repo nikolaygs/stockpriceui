@@ -45,10 +45,6 @@ export default function MaxProfitForm() {
     }
   }
 
-  function sum() {
-    return 1;
-  }
-
   // Handling of the form submission - it does two things:
   // 1. Performs a client-side validation
   // 2. Fires server request (if the validation passes)
