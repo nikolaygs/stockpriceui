@@ -72,7 +72,7 @@ export default function MaxProfitForm() {
       `http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`,
       {
         retries: 3,
-        retryOn: [500, 503],
+        retryOn: [429, 500, 503],
         retryDelay: function (attempt, error, response) {
           return Math.pow(2, attempt) * 1000; // 1 sec, 2 sec, 4 sec
         }
