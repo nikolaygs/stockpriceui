@@ -6,6 +6,8 @@ import parse from "html-react-parser";
 import configData from "./config.json";
 
 export default function MaxProfitForm() {
+  const fetch = require('fetch-retry')(global.fetch);
+
   // React boostrap alert variants used
   const variantSuccess = "success";
   const variantInfo = "info";
@@ -67,7 +69,14 @@ export default function MaxProfitForm() {
 
     // params are passed as query params
     fetch(
-      `http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`
+      `http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`,
+      {
+        retries: 3,
+        retryOn: [500, 503],
+        retryDelay: function (attempt, error, response) {
+          return Math.pow(2, attempt) * 1000; // 1 sec, 2 sec, 4 sec
+        }
+      }
     )
       .then((r) => r.json().then((data) => ({ status: r.status, body: data })))
       .then((data) => processResult(data))
