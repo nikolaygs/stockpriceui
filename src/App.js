@@ -1,9 +1,14 @@
 import { useState } from "react";
-import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import parse from "html-react-parser";
 import configData from "./config.json";
+
+import ResultPanel from "./components/ResultPanel";
+import DateTimePicker from "./components/DateTimePicker";
+import AmountField from "./components/AmountField";
+import StockSymbolField from "./components/StockSymbolField";
+
 
 export default function MaxProfitForm() {
   const fetch = require('fetch-retry')(global.fetch);
@@ -64,9 +69,10 @@ export default function MaxProfitForm() {
   // Builds URL with query params and calls the server using fetch API
   function getMaxProfit() {
     // convert to seconds
-    let beginSeconds = Date.parse(beginPoint) / 1000;
-    let endSeconds = Date.parse(endPoint) / 1000;
+    const beginSeconds = Date.parse(beginPoint) / 1000;
+    const endSeconds = Date.parse(endPoint) / 1000;
 
+    console.log(`http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`)
     // params are passed as query params
     fetch(
       `http://${configData.SERVER_HOST}:${configData.SERVER_PORT}/maxprofit?symbol=${stock}&begin=${beginSeconds}&end=${endSeconds}`,
@@ -89,6 +95,8 @@ export default function MaxProfitForm() {
   // 2. Server returned 4XX retuest - panel renders the cause so client can fix its request
   // 3. Any other error - generic message that server failed to process the request is displayed
   function processResult(data) {
+    console.log("Success")
+
     if (data.status == 200) {
       if (!validateSuccessResponse(data.body)) {
         setResultPanelProps(variantError, "Failed to parse the response returned by the server");
@@ -155,10 +163,10 @@ export default function MaxProfitForm() {
   }
 
   return (
-    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+    <Form noValidate validated={validated} onSubmit={handleSubmit} data-testid="form">
       <StockSymbolField onChange={onFieldChange} />
-      <DatePicker title="Begin date" id="begin" onChange={onFieldChange} />
-      <DatePicker title="End date" id="end" onChange={onFieldChange} />
+      <DateTimePicker title="Begin date" id="begin" onChange={onFieldChange} />
+      <DateTimePicker title="End date" id="end" onChange={onFieldChange} />
       <AmountField onChange={onFieldChange} />
 
       <ResultPanel
@@ -173,69 +181,3 @@ export default function MaxProfitForm() {
     </Form>
   );
 }
-
-function StockSymbolField({ onChange }) {
-  return (
-    <Form.Group className="mb-3" controlId="stock">
-      <Form.Label>Stock</Form.Label>
-      <Form.Control required type="text" onChange={onChange} />
-      <Form.Control.Feedback type="invalid">
-        The field is required
-      </Form.Control.Feedback>
-    </Form.Group>
-  );
-}
-
-function AmountField({ onChange }) {
-  return (
-    <Form.Group className="mb-3" controlId="amount">
-      <Form.Label>Amount</Form.Label>
-      <Form.Control
-        required
-        type="number"
-        min={1}
-        step="0.01"
-        onChange={onChange}
-      />
-      <Form.Control.Feedback type="invalid">
-        Amount must be a possitive number with max 2 decimals
-      </Form.Control.Feedback>
-    </Form.Group>
-  );
-}
-
-function DatePicker({ id, title, onChange }) {
-  return (
-    <Form.Group className="mb-3" controlId={id}>
-      <Form.Label>{title}</Form.Label>
-      <Form.Control type="datetime-local" onChange={onChange} required />
-    </Form.Group>
-  );
-}
-
-function ResultPanel({ setShow, show, variant, message }) {
-  function getHeader(variant) {
-    switch (variant) {
-      case "success":
-        return "Server successfully processed your request";
-      case "info":
-        return "No data was found";
-      default:
-        return "Fatal error";
-    }
-  }
-
-  return (
-    <Alert show={show} variant={variant}>
-      <Alert.Heading>{getHeader(variant)}</Alert.Heading>
-      <p>{message}</p>
-      <hr />
-      <div className="d-flex justify-content-end">
-        <Button onClick={() => setShow(false)} variant={variant}>
-          Close me
-        </Button>
-      </div>
-    </Alert>
-  );
-}
-
